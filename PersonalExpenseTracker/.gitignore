@@ -1,0 +1,14 @@
+# Ignore build output folders
+bin/
+obj/
+
+# Ignore Visual Studio specific files
+.vs/
+.vscode/
+
+# Ignore NuGet packages
+packages/
+
+# Ignore temporary files
+*.log
+*.tmp
