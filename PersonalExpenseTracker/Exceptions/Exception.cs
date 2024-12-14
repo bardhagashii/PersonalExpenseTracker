@@ -24,10 +24,4 @@
             : base("No expenses found!") { }
     }
 
-    public class InvalidIdException : Exception
-    {
-        public InvalidIdException()
-            : base("Id cannot be 0 or negative!") { }
-    }
-
 }
