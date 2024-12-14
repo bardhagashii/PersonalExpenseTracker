@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PersonalExpenseTracker.Exceptions;
 using PersonalExpenseTracker.Model;
 using PersonalExpenseTracker.Services;
 
@@ -49,7 +50,7 @@ namespace PersonalExpenseTracker.Controllers
 
             // api/expense/{id}
             [HttpDelete("{id}")]
-            public IActionResult DeleteExpense(int id)
+            public IActionResult DeleteExpense(Guid id)
             {
                 try
                 {
@@ -65,42 +66,81 @@ namespace PersonalExpenseTracker.Controllers
                 }
             }
 
-        // GET: api/expense/category/{category}
-     /*   [HttpGet("expenses/by-category")]
-        public IActionResult GetExpensesGroupedByCategory()
+        [HttpGet("byCategory")]
+        public IActionResult GetExpensesByCategory()
         {
-            var groupedExpenses = _expenseManager.ExpensesByCategory();  // Assuming this method in your ExpenseManager class
-            return Ok(groupedExpenses);  // Returns grouped expenses as JSON
+            try
+            {
+                var groupedExpenses = _expenseManager.GetExpensesByCategory();
+                return Ok(groupedExpenses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // GET: api/expense/total
-        [HttpGet("total")]
-            public IActionResult GetTotalAmount()
+
+
+        [HttpGet("/TotalAmountOfCategory")]
+        public IActionResult GetTotalAmountOfCategory()
+        {
+            try
             {
-                try
-                {
-                    var total = _expenseManager.GetOverallTotal(); // Add method in ExpenseManager
-                    return Ok($"Overall total expense: {total:C}");
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
+                var totals = _expenseManager.GetTotalAmountOfCategory();
+                return Ok(totals);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
 
-            // GET: api/expense/total/category
-            [HttpGet("total/category")]
-            public IActionResult GetTotalAmountByCategory()
-            {
-                try
-                {
-                    var totals = _expenseManager.GetCategoryTotals(); // Add method in ExpenseManager
-                    return Ok(totals);
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
-            }*/
         }
+
+        [HttpGet("/totalAmountOfExpenses")]
+        public IActionResult GetTotalAmount()
+        {
+            try
+            {
+                var total = _expenseManager.GetTotalAmount();
+                return Ok(new { TotalAmount = total });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
+        [HttpGet("filterByDateRange")]
+        public ActionResult<List<Expense>> FilterExpensesByDateRange(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                // Call the service to filter expenses
+                var filteredExpenses = _expenseManager.FilterExpensesByDateRange(startDate, endDate);
+
+                // Return the filtered expenses or a message if none found
+                if (filteredExpenses.Count == 0)
+                {
+                    return NotFound(new { message = "No expenses found within the given date range!" });
+                }
+
+                return Ok(filteredExpenses);
+            }
+            catch (ArgumentException ex)
+            {
+                // Handle invalid date range exception
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (EmptyListException)
+            {
+                // Handle empty list exception
+                return NotFound(new { message = "No expenses found!" });
+            }
+        }
+    }
+
 }
+

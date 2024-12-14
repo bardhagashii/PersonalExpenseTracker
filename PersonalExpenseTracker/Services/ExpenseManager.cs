@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using PersonalExpenseTracker.Exceptions;
 using PersonalExpenseTracker.Model;
+using System.Security.Cryptography.X509Certificates;
 
 namespace PersonalExpenseTracker.Services
 {
@@ -31,7 +32,6 @@ namespace PersonalExpenseTracker.Services
 
             var expense = new Expense       
             {
-                Id = expenses.Count + 1,
                 Description = description,
                 Category = category,
                 Amount = amount,
@@ -54,74 +54,71 @@ namespace PersonalExpenseTracker.Services
 
 
         //Display all expenses in a tabular format grouped by category.
-        public void ExpensesByCategory()
+        public Dictionary<string, List<Expense>> GetExpensesByCategory()
         {
-            if (!expenses.Any()) 
+            if (!expenses.Any())
             {
-               throw new EmptyListException();
+                throw new EmptyListException(); 
             }
-
+            // Group expenses by category once and return it
             var groupedExpenses = expenses
-                .GroupBy(e => e.Category)       //group expenses by category
-                .ToList();
+                .GroupBy(e => e.Category)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
+            // Display expenses in tabular format grouped by category
             foreach (var group in groupedExpenses)
             {
-                Console.WriteLine($"Category: {group.Key}\n-----------------------------"); 
-
+                Console.WriteLine($"Category: {group.Key}\n-----------------------------");
                 Console.WriteLine("ID\tDescription\t\tAmount\tDate");
                 Console.WriteLine("-----------------------------");
 
-                foreach (var expense in group)
+                foreach (var expense in group.Value)
                 {
                     Console.WriteLine($"{expense.Id}\t{expense.Description}\t\t{expense.Amount}\t{expense.Date.ToShortDateString()}");
                 }
-
                 Console.WriteLine();
             }
+            return groupedExpenses;
         }
 
 
         //Calculate and display the total amount spent in each category
-        public void CategoryTotalAmount()
+        public Dictionary<string, decimal> GetTotalAmountOfCategory()
         {
             if (!expenses.Any())  // Check if the expenses list is empty
             {
                 throw new EmptyListException();
             }
 
-            var groupedExpenses = expenses
-                .GroupBy(e => e.Category)
-                .ToList();
-
+            var groupedExpenses = expenses.GroupBy(e => e.Category).ToList();
             foreach (var group in groupedExpenses)
             {
-                decimal totalAmount = group.Sum(e => e.Amount);  
+                decimal totalAmount = group.Sum(e => e.Amount);
                 Console.WriteLine($"Total amount spent for {group.Key}: {totalAmount:C}\n");
+
             }
+            return expenses.GroupBy(e => e.Category).ToDictionary(g => g.Key, g => g.Sum(e => e.Amount));
+
         }
 
 
         //Calculate and display the overall total expense
-        public void TotalAmountOfExpenses()
+        public decimal GetTotalAmount()
         {
-            if (!expenses.Any()) 
+            if (!expenses.Any())
             {
                 throw new EmptyListException();
             }
-
             decimal expensesTotal = expenses.Sum(e => e.Amount);
             Console.WriteLine($"Overall total expense: {expensesTotal:C}");
+
+            return expenses.Sum(e => e.Amount);
         }
 
 
         //Delete an expense by providing its ID.
-        public bool DeleteExpense(int id)
+        public bool DeleteExpense(Guid id)
         {
-            if (id <=0)      // check if ID is negative or zero
-            {
-                throw new InvalidIdException();     //handle invalid input exception
-            }
             var expenseToDelete = expenses.FirstOrDefault(e => e.Id == id);
 
             if (expenseToDelete != null)         //check for null input
@@ -136,5 +133,37 @@ namespace PersonalExpenseTracker.Services
                 return false;
             }
         }
+
+
+        //Add a feature to filter expenses by date range.
+        public List<Expense> FilterExpensesByDateRange(DateTime startDate, DateTime endDate)
+        {
+            if (!expenses.Any())
+            {
+                throw new EmptyListException();
+            }
+            if (startDate > endDate)     //check for invalid input
+            {
+                throw new ArgumentException("Start date cannot be later than the end date!");
+            }
+
+            var filteredExpenses = expenses.Where(e => e.Date >= startDate && e.Date <= endDate).ToList(); //filter expenses withing the given range
+
+            if (!filteredExpenses.Any())   //checks if there are any expenses within the given date
+            {
+                Console.WriteLine("No expenses found within the given date range!");
+            }
+            else
+            {
+                Console.WriteLine($"Expenses from {startDate.ToShortDateString()} to {endDate.ToShortDateString()}:");
+                Console.WriteLine("ID\tDescription\t\tAmount\tDate");
+                foreach (var expense in filteredExpenses)
+                {
+                    Console.WriteLine($"{expense.Id}\t{expense.Description}\t\t{expense.Amount:C}\t{expense.Date.ToShortDateString()}");
+                }
+            }
+            return filteredExpenses;
+        }
+
     }
 }

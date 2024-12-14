@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "a1wo7i1Hmz5akw8gfHFECETfqO9Cwo0VvO2qgqJ3qEw=",
+  "Source": "PersonalExpenseTracker",
+  "BasePath": "_content/PersonalExpenseTracker",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
