@@ -8,6 +8,47 @@ namespace PersonalExpenseTracker.Services
     public class ExpenseManager
     {
         private List<Expense> expenses = new List<Expense>();
+        private readonly string filePath = "expenses.json";  // file path to save expenses
+
+        // add constructor to load expenses when the expense manager is instantiated
+        public ExpenseManager()
+        {
+            expenses = LoadExpenses();  // load expenses from file
+        }
+
+        // save expenses to a JSON file
+        public void SaveExpenses()
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(expenses, Formatting.Indented); // Convert list to JSON
+                File.WriteAllText(filePath, json); // Save JSON to file
+                Console.WriteLine("Expenses saved to file.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving expenses: {ex.Message}");
+            }
+        }
+        // Load expenses from a JSON file
+        private List<Expense> LoadExpenses()
+        {
+            try
+            {
+                if (File.Exists(filePath))  // check if the file exists
+                {
+                    var json = File.ReadAllText(filePath);  // read JSON content from the file
+                    return JsonConvert.DeserializeObject<List<Expense>>(json) ?? new List<Expense>(); // Deserialize back to List<Expense>
+                }
+                return new List<Expense>();  // return empty list if file doesn't exist
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading expenses: {ex.Message}");
+                return new List<Expense>();  // eturn empty list on error
+            }
+        }
+
 
         // Adding operation
         public void AddExpense(string description, string category, decimal amount, DateTime? date = null)
@@ -24,21 +65,23 @@ namespace PersonalExpenseTracker.Services
                 throw new EmptyCategoryException();
             }
 
+
             // Validate amount of expense
             if (amount <= 0)
             {
                 throw new InvalidAmountException();
             }
 
-            var expense = new Expense       
+            var expense = new Expense
             {
                 Description = description,
-                Category = category,
+                Category = category,  // Store the Category enum value directly
                 Amount = amount,
                 Date = date ?? DateTime.Now  // Default to today's date if not provided
             };
 
             expenses.Add(expense);
+            SaveExpenses();  // save expenses to file after adding new expense
         }
 
         //View all expenses
@@ -89,7 +132,6 @@ namespace PersonalExpenseTracker.Services
             {
                 throw new EmptyListException();
             }
-
             var groupedExpenses = expenses.GroupBy(e => e.Category).ToList();
             foreach (var group in groupedExpenses)
             {
