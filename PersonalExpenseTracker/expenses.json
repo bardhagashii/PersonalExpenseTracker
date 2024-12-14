@@ -1,16 +1,16 @@
 [
   {
-    "Id": 1,
-    "Date": "2024-12-15T00:00:00",
-    "Description": "Lunch",
+    "Id": "cb2cc345-8607-4a58-b5ab-e7c6975ec441",
+    "Date": "2024-12-14T18:55:38.711Z",
+    "Description": "test1",
     "Category": "Food",
-    "Amount": 15.50
+    "Amount": 15.0
   },
   {
-    "Id": 2,
-    "Date": "2024-12-15T00:00:00",
-    "Description": "Dinner",
-    "Category": "Food",
-    "Amount": 9.60
+    "Id": "7f991a0d-40f0-442b-bdd9-9319ab74dec6",
+    "Date": "2024-12-18T18:55:38.711Z",
+    "Description": "test1",
+    "Category": "Other",
+    "Amount": 80.0
   }
 ]
