@@ -2,7 +2,7 @@
 The Personal Expense Tracker is a C# Web API application designed to help users manage their personal expenses. Users can add, categorize, delete, and view their expenses, as well as calculate total amounts per category. The app supports file-based persistence (via JSON serialization) and can load saved expenses on startup. Additionally, it includes features for filtering expenses by date range and supports in-memory storage for testing purposes.
 
 
--Instructions to Run the Application:
+1. Instructions to Run the Application:
 
 Clone or download the repository.
 
@@ -16,7 +16,7 @@ The application also includes unit tests that can be run with XUnit.
 
 
 
--How the Requirements Are Addressed
+2. How the Requirements Are Addressed
 
 The following methods in the ExpenseManager and ExpenseController classes handle specific functional requirements:
 
@@ -55,7 +55,7 @@ DeleteExpense: Deletes an expense by its ID.
 ExpenseController.DeleteExpense: Endpoint (DELETE /api/expenses/{id}) to delete an expense.
 
 
-Bonus Features Implemented
+3. Bonus Features Implemented
 
 Filter Expenses by Date Range:
 
@@ -72,12 +72,12 @@ The project includes unit tests (PersonalExpenseTracker.Tests) that verify funct
 
 
 
-Assumptions and Limitations
+4. Assumptions and Limitations
 
 The application uses in-memory storage by default, with optional JSON file saving/loading. It assumes valid user inputs and does not implement authentication or roles. No database is used, and the app currently supports only basic date range filtering. Additionally, it does not support recurring expenses or advanced reporting.
 
 
-Challenges
+5. Challenges
 
 Setting up the test project was challenging due to data handling. I used in-memory storage to resolve this and ensure tests ran correctly.
 Implementing error handling for invalid inputs required careful consideration to avoid app crashes. Custom exceptions were used to manage these errors.
