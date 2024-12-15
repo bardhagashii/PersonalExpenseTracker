@@ -8,107 +8,125 @@ namespace PersonalExpenseTracker.Services
     public class ExpenseManager
     {
         private List<Expense> expenses = new List<Expense>();
-        private readonly string filePath = "expenses.json";  // file path to save expenses
+        private readonly string filePath;  // File path to save expenses
+        private bool useInMemory;
 
-        // add constructor to load expenses when the expense manager is instantiated
-        public ExpenseManager()
+        // Constructor to load expenses when the expense manager is instantiated
+        public ExpenseManager(string filePath = "expenses.json", bool useInMemory = false)
         {
-            expenses = LoadExpenses();  // load expenses from file
+            this.filePath = filePath;
+            this.useInMemory = useInMemory;
+            expenses = useInMemory ? new List<Expense>() : LoadExpenses();
         }
 
-        // save expenses to a JSON file
-        public void SaveExpenses()
+        // centralized empty list check
+        private void EnsureExpensesExist()
+        {
+            if (!expenses.Any())
+            {
+                throw new EmptyListException();
+            }
+        }
+
+        // centralized logging
+        private void LogMessage(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        // centralized exception handling
+        private void TryExecuteAction(Action action, string errorMessage)
         {
             try
             {
-                var json = JsonConvert.SerializeObject(expenses, Formatting.Indented); // Convert list to JSON
-                File.WriteAllText(filePath, json); // Save JSON to file
-                Console.WriteLine("Expenses saved to file.");
+                action();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error saving expenses: {ex.Message}");
+                Console.WriteLine($"{errorMessage}: {ex.Message}");
             }
         }
+
+        public void ClearExpenses() => expenses.Clear();  // Used for test cases
+
+        // Save expenses to a file
+        public void SaveExpenses()
+        {
+            TryExecuteAction(() =>
+            {
+                var json = JsonConvert.SerializeObject(expenses, Formatting.Indented);
+                File.WriteAllText(filePath, json);
+                LogMessage("Expenses saved to file.");
+            }, "Error saving expenses");
+        }
+
         // Load expenses from a JSON file
         private List<Expense> LoadExpenses()
         {
             try
             {
-                if (File.Exists(filePath))  // check if the file exists
-                {
-                    var json = File.ReadAllText(filePath);  // read JSON content from the file
-                    return JsonConvert.DeserializeObject<List<Expense>>(json) ?? new List<Expense>(); // Deserialize back to List<Expense>
-                }
-                return new List<Expense>();  // return empty list if file doesn't exist
+                var json = File.ReadAllText(filePath);
+                return JsonConvert.DeserializeObject<List<Expense>>(json) ?? new List<Expense>();
+            }
+            catch (FileNotFoundException)
+            {
+                return new List<Expense>();  // Return empty list if file doesn't exist
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading expenses: {ex.Message}");
-                return new List<Expense>();  // eturn empty list on error
+                return new List<Expense>();
             }
         }
 
-
-        // Adding operation
+        // Add a new expense
         public void AddExpense(string description, string category, decimal amount, DateTime? date = null)
         {
-            // Validate description of expense
             if (string.IsNullOrEmpty(description))
-            {
                 throw new EmptyDescriptionException();
-            }
-
-            // Validate category of expense
             if (string.IsNullOrEmpty(category))
-            {
                 throw new EmptyCategoryException();
-            }
-
-
-            // Validate amount of expense
             if (amount <= 0)
-            {
                 throw new InvalidAmountException();
-            }
 
             var expense = new Expense
             {
                 Description = description,
-                Category = category,  // Store the Category enum value directly
+                Category = category,
                 Amount = amount,
                 Date = date ?? DateTime.Now  // Default to today's date if not provided
             };
 
             expenses.Add(expense);
-            SaveExpenses();  // save expenses to file after adding new expense
+            SaveExpenses();  // Save expenses to file after adding new expense
         }
 
-        //View all expenses
+        // View all expenses
         public List<Expense> GetAllExpenses()
         {
-            if (!expenses.Any())  // Check if the expenses list is empty
-            {
-                throw new EmptyListException();  // Handle the empty list scenario
-            }
-
-            return expenses;  // Return the list of expenses
+            EnsureExpensesExist();
+            return expenses;
         }
 
-
-        //Display all expenses in a tabular format grouped by category.
+        // Display all expenses in a tabular format grouped by category
         public Dictionary<string, List<Expense>> GetExpensesByCategory()
         {
-            if (!expenses.Any())
-            {
-                throw new EmptyListException(); 
-            }
-            // Group expenses by category once and return it
-            var groupedExpenses = expenses
-                .GroupBy(e => e.Category)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            EnsureExpensesExist();
+            var groupedExpenses = GroupExpensesByCategory();
+            DisplayGroupedExpenses(groupedExpenses);
+            return groupedExpenses;
+        }
 
-            // Display expenses in tabular format grouped by category
+        // group expenses by category
+        private Dictionary<string, List<Expense>> GroupExpensesByCategory()
+        {
+            return expenses.GroupBy(e => e.Category)
+                           .ToDictionary(g => g.Key, g => g.ToList());
+        }
+
+        // Display grouped expenses in a tabular format
+        private void DisplayGroupedExpenses(Dictionary<string, List<Expense>> groupedExpenses)
+        {
             foreach (var group in groupedExpenses)
             {
                 Console.WriteLine($"Category: {group.Key}\n-----------------------------");
@@ -121,77 +139,63 @@ namespace PersonalExpenseTracker.Services
                 }
                 Console.WriteLine();
             }
+        }
+
+        // Calculate and display the total amount spent in each category
+        public Dictionary<string, decimal> GetTotalAmountOfCategory()
+        {
+            EnsureExpensesExist();
+
+            var groupedExpenses = expenses
+                .GroupBy(e => e.Category)
+                .ToDictionary(g => g.Key, g => g.Sum(e => e.Amount));
+
+            foreach (var group in groupedExpenses)
+            {
+                Console.WriteLine($"Total amount spent for {group.Key}: {group.Value:C}");
+            }
+
             return groupedExpenses;
         }
 
-
-        //Calculate and display the total amount spent in each category
-        public Dictionary<string, decimal> GetTotalAmountOfCategory()
-        {
-            if (!expenses.Any())  // Check if the expenses list is empty
-            {
-                throw new EmptyListException();
-            }
-            var groupedExpenses = expenses.GroupBy(e => e.Category).ToList();
-            foreach (var group in groupedExpenses)
-            {
-                decimal totalAmount = group.Sum(e => e.Amount);
-                Console.WriteLine($"Total amount spent for {group.Key}: {totalAmount:C}\n");
-
-            }
-            return expenses.GroupBy(e => e.Category).ToDictionary(g => g.Key, g => g.Sum(e => e.Amount));
-
-        }
-
-
-        //Calculate and display the overall total expense
+        // Calculate and display the overall total expense
         public decimal GetTotalAmount()
         {
-            if (!expenses.Any())
-            {
-                throw new EmptyListException();
-            }
+            EnsureExpensesExist();
             decimal expensesTotal = expenses.Sum(e => e.Amount);
             Console.WriteLine($"Overall total expense: {expensesTotal:C}");
 
-            return expenses.Sum(e => e.Amount);
+            return expensesTotal;
         }
 
-
-        //Delete an expense by providing its ID.
+        // Delete an expense by providing its ID
         public bool DeleteExpense(Guid id)
         {
             var expenseToDelete = expenses.FirstOrDefault(e => e.Id == id);
 
-            if (expenseToDelete != null)         //check for null input
+            if (expenseToDelete == null)
             {
-                expenses.Remove(expenseToDelete);
-                Console.WriteLine($"Expense with ID {id} has been deleted.");
-                return true;
+                throw new ExpenseNotFoundException($"Expense with ID {id} not found.");
             }
-            else
-            {
-                Console.WriteLine($"Expense with ID {id} not found.");
-                return false;
-            }
+
+            expenses.Remove(expenseToDelete);
+            LogMessage($"Expense with ID {id} has been deleted.");
+            return true;
         }
 
-
-        //Add a feature to filter expenses by date range.
+        // Filter expenses by date range
         public List<Expense> FilterExpensesByDateRange(DateTime startDate, DateTime endDate)
         {
-            if (!expenses.Any())
-            {
-                throw new EmptyListException();
-            }
-            if (startDate > endDate)     //check for invalid input
+            EnsureExpensesExist();
+
+            if (startDate > endDate)
             {
                 throw new ArgumentException("Start date cannot be later than the end date!");
             }
 
-            var filteredExpenses = expenses.Where(e => e.Date >= startDate && e.Date <= endDate).ToList(); //filter expenses withing the given range
+            var filteredExpenses = expenses.Where(e => e.Date >= startDate && e.Date <= endDate).ToList();
 
-            if (!filteredExpenses.Any())   //checks if there are any expenses within the given date
+            if (!filteredExpenses.Any())
             {
                 Console.WriteLine("No expenses found within the given date range!");
             }
@@ -204,8 +208,8 @@ namespace PersonalExpenseTracker.Services
                     Console.WriteLine($"{expense.Id}\t{expense.Description}\t\t{expense.Amount:C}\t{expense.Date.ToShortDateString()}");
                 }
             }
+
             return filteredExpenses;
         }
-
     }
 }

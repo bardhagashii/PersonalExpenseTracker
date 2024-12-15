@@ -12,5 +12,47 @@
     "Description": "test1",
     "Category": "Other",
     "Amount": 80.0
+  },
+  {
+    "Id": "7bc7be6d-a420-457f-87d6-2471994d23ab",
+    "Date": "2024-12-14T20:56:33.021Z",
+    "Description": "testing",
+    "Category": "Other",
+    "Amount": 21.0
+  },
+  {
+    "Id": "269d4646-8d1f-47a6-86d8-72beb9119426",
+    "Date": "2024-12-14T21:24:31.211Z",
+    "Description": "test",
+    "Category": "Food",
+    "Amount": 123.0
+  },
+  {
+    "Id": "e095b20c-29ce-4abb-a121-6bc7e89c393c",
+    "Date": "2024-12-15T01:18:30.033Z",
+    "Description": "Movies",
+    "Category": "Entertainment",
+    "Amount": 15.60
+  },
+  {
+    "Id": "3ecf23b7-05ab-4fcc-8b13-5ee232d809b6",
+    "Date": "2024-12-15T01:18:30.033Z",
+    "Description": "Shopping",
+    "Category": "Entertainment",
+    "Amount": 459.3
+  },
+  {
+    "Id": "6d7e3438-fed6-442e-8897-87685971ac01",
+    "Date": "2024-12-15T01:18:30.033Z",
+    "Description": "Dinner",
+    "Category": "Food",
+    "Amount": 96.5
+  },
+  {
+    "Id": "feb70a64-254e-45ab-ad97-a0ea335f1922",
+    "Date": "2024-12-15T01:18:30.033Z",
+    "Description": "Bus Ticket",
+    "Category": "Transportation",
+    "Amount": 25.4
   }
 ]

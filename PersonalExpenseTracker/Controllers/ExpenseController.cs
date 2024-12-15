@@ -5,68 +5,88 @@ using PersonalExpenseTracker.Services;
 
 namespace PersonalExpenseTracker.Controllers
 {
-        [ApiController]
-        [Route("api/[controller]")]
-        public class ExpenseController : ControllerBase
+    [Route("api/expenses")]
+    [ApiController]
+    public class ExpenseController : ControllerBase
+    {
+        private readonly ExpenseManager _expenseManager;
+
+        public ExpenseController(ExpenseManager expenseManager)
         {
-            private readonly ExpenseManager _expenseManager;
+            _expenseManager = expenseManager;
+        }
 
-            public ExpenseController(ExpenseManager expenseManager)
+        // Helper method for handling responses
+        private IActionResult HandleException(Exception ex)
+        {
+            switch (ex)
             {
-                _expenseManager = expenseManager;
+                case EmptyListException:
+                    return NotFound(new { message = ex.Message });
+                case ArgumentException:
+                    return BadRequest(new { message = ex.Message });
+                default:
+                    return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetAllExpenses()
+        {
+            try
+            {
+                var expenses = _expenseManager.GetAllExpenses();
+                return Ok(expenses);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost]
+        public IActionResult AddExpense([FromBody] Expense expense)
+        {
+            try
+            {
+                _expenseManager.AddExpense(expense.Description, expense.Category, expense.Amount, expense.Date);
+                return Ok("Expense added successfully.");
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteExpense(Guid id)
+        {
+            // Check if the ID is empty or invalid 
+            if (id == Guid.Empty)
+            {
+                return BadRequest(new { message = "Invalid expense ID." });
             }
 
-            // api/expense
-            [HttpGet]
-            public IActionResult GetAllExpenses()
+            try
             {
-                try
+                var success = _expenseManager.DeleteExpense(id);
+                if (success)
                 {
-                    var expenses = _expenseManager.GetAllExpenses();
-                    return Ok(expenses);
+                    return Ok($"Expense with ID {id} was deleted successfully!");
                 }
-                catch (Exception ex)
+                else
                 {
-                    return BadRequest(ex.Message);
+                    return NotFound($"Expense with ID {id} was not found!");
                 }
             }
-
-
-            // api/expense
-            [HttpPost]
-            public IActionResult AddExpense([FromBody] Expense expense)
+            catch (Exception ex)
             {
-                try
-                {
-                    _expenseManager.AddExpense(expense.Description, expense.Category, expense.Amount, expense.Date);
-                    return Ok("Expense added successfully.");
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
+                return HandleException(ex);
             }
+        }
 
 
-            // api/expense/{id}
-            [HttpDelete("{id}")]
-            public IActionResult DeleteExpense(Guid id)
-            {
-                try
-                {
-                    var success = _expenseManager.DeleteExpense(id);
-                    if (success)
-                        return Ok($"Expense with ID {id} was deleted successfully!");
-                    else
-                        return NotFound($"Expense with ID {id} was not found!");
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
-            }
-
-        [HttpGet("byCategory")]
+        [HttpGet("category")]
         public IActionResult GetExpensesByCategory()
         {
             try
@@ -76,13 +96,11 @@ namespace PersonalExpenseTracker.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return HandleException(ex);
             }
         }
 
-
-
-        [HttpGet("/TotalAmountOfCategory")]
+        [HttpGet("category/totalAmount")]
         public IActionResult GetTotalAmountOfCategory()
         {
             try
@@ -92,12 +110,11 @@ namespace PersonalExpenseTracker.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return HandleException(ex);
             }
-
         }
 
-        [HttpGet("/totalAmountOfExpenses")]
+        [HttpGet("totalAmount")]
         public IActionResult GetTotalAmount()
         {
             try
@@ -107,21 +124,22 @@ namespace PersonalExpenseTracker.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return HandleException(ex);
             }
         }
 
 
 
-        [HttpGet("filterByDateRange")]
+
+        [HttpGet("filterByDate")]
         public ActionResult<List<Expense>> FilterExpensesByDateRange(DateTime startDate, DateTime endDate)
         {
             try
             {
-                // Call the service to filter expenses
+                // call the service to filter expenses
                 var filteredExpenses = _expenseManager.FilterExpensesByDateRange(startDate, endDate);
 
-                // Return the filtered expenses or a message if none found
+                // return the filtered expenses or a message if none found
                 if (filteredExpenses.Count == 0)
                 {
                     return NotFound(new { message = "No expenses found within the given date range!" });
@@ -131,16 +149,14 @@ namespace PersonalExpenseTracker.Controllers
             }
             catch (ArgumentException ex)
             {
-                // Handle invalid date range exception
+                // handle invalid date range exception
                 return BadRequest(new { message = ex.Message });
             }
             catch (EmptyListException)
             {
-                // Handle empty list exception
+                // handle empty list exception
                 return NotFound(new { message = "No expenses found!" });
             }
         }
     }
-
 }
-
